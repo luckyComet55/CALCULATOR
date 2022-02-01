@@ -8,7 +8,7 @@ typedef struct parameter {
     struct parameter * next;
 } PARAMETERS;
 
-PARAMETERS * ParamCon(char name[15]);
+void ParamCon(PARAMETERS * Head, char name[15]);
 PARAMETERS * MakeHead();
 void DeleteList(PARAMETERS * Head);
 int FindParam(PARAMETERS * head, char name[15]);

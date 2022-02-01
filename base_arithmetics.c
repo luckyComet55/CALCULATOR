@@ -129,7 +129,8 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                 }
             }
             if(!FindParam(paramList, name)) {
-                paramList->next = ParamCon(name);
+                ParamCon(paramList, name);
+                //paramList->next = ParamCon(name);
             }
             Push(polNot, '!');
         } else if(symb != ' ') {
