@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include "queue.h"
 #include "stack.h"
+#include "params.h"
 #include "base_arithmetics.h"
 
 /*
@@ -31,7 +32,8 @@ int main() {
     ////
     QUEUE * polNot = QueueCon();
     STACK * tempStack = StackCon();
-    MainProcessing(input, tempStack, polNot);
+    PARAMETERS * paramList = MakeHead();
+    MainProcessing(input, tempStack, polNot, paramList);
     //// Debug output. Delete in release version
     printf("\nReverse Polish Notation:\n");
     for (int i = polNot->firstPos; i < polNot->size; ++i) {
@@ -45,6 +47,7 @@ int main() {
     printf("%lf", RearrangementOutput(polNot));
     QueueDel(polNot);
     QueueDel(input);
+    DeleteList(paramList);
     StackDel(tempStack);
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <math.h>
 #include "queue.h"
 #include "stack.h"
+#include "params.h"
 #include "base_arithmetics.h"
 
 
@@ -84,8 +85,7 @@
  *      массив ans.
  * */
 
-
-void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot) {
+void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS * paramList) {
     int localShift = 0;
     while(input->size - input->firstPos > 0) { // Цикл выполняется до тех пор, пока
                                                // позиция первого элемента в очереди
@@ -116,6 +116,22 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot) {
                                                // знаком-разделителем (от этого
                                                // придётся избавиться, если в тз
                                                // внезапно добавят факториал).
+        } else if(isalpha(symb)) {
+            char name[15] = { 0 };
+            int i = 0;
+            while(isalpha(symb)) {
+                Push(polNot, symb);
+                name[i++] = symb;
+                if(isalpha(Peek(input))) {
+                    symb = Pop(input);
+                } else {
+                    symb = Peek(input);
+                }
+            }
+            if(!FindParam(paramList, name)) {
+                paramList->next = ParamCon(name);
+            }
+            Push(polNot, '!');
         } else if(symb != ' ') {
             switch (symb) {
                 case '(':
