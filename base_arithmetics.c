@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "queue.h"
 #include "stack.h"
@@ -85,6 +86,89 @@
  *      массив ans.
  * */
 
+int UnaryOperations(char func[15]) {
+    char funcDB[10][15] = {
+            {"sin\n"}, {"cos\0"},
+            {"tg\0"}, {"ln\0"},
+            {"sqrt\0"}, {"abs\0"},
+            {"exp\0"}, {"imag\0"},
+            {"mag\0"}, {"phase\0"}
+    };
+    for (int i = 0; i < 10; ++i) {
+        if(strcmp(func, funcDB[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int BinaryOperations(char func[15]) {
+    char funcDB[7][15] = {
+            {"*\0"}, {"+\0"},
+            {"^\0"},  {"-\0"},
+            {"/\0"}, {"log\0"},
+            {"pow\0"}
+    };
+    for (int i = 0; i < 7; ++i) {
+        if(strcmp(func, funcDB[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+double Add(double a, double b) {
+    return a + b;
+}
+
+double Subtract(double a, double b) {
+    return a - b;
+}
+
+double Multiply(double a, double b) {
+    return a * b;
+}
+
+double Divide(double a, double b) {
+    return a / b;
+}
+
+double Log(double a, double b) {
+    return log(b) / log(a);
+}
+
+double NatLog(double a) {
+    return log(a);
+}
+
+double Sin(double a) {
+    return sin(a);
+}
+
+double Cos(double a) {
+    return cos(a);
+}
+
+double Tan(double a) {
+    return tan(a);
+}
+
+double Sqrt(double a) {
+    return sqrt(a);
+}
+
+double Power(double a, double b) {
+    return pow(a, b);
+}
+
+double Abs(double a) {
+    return a * pow(-1, (a < 0));
+}
+
+double Exp(double a) {
+    return pow(M_E, a);
+}
+
 void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS * paramList) {
     int localShift = 0;
     while(input->size - input->firstPos > 0) { // Цикл выполняется до тех пор, пока
@@ -101,6 +185,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
         prior[4] = 4; // '^'
         prior[5] = 2; // '-'
         prior[7] = 3; // '/'
+        prior[9] = 3; // Все оставшиеся бинарные и унарные операции
         char temp;
         if(isdigit(symb)) {                             // Если встреченный символ является цифрой,
             while(isdigit(symb)) {                      // то он добавляется в очередь polNot, как и
@@ -229,6 +314,18 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
     double * ans = (double*) calloc(1, sizeof(double));
     int top = 0, capacity = 1;
     double operand;
+    double (*binFuncs[])(double, double) = {
+            Multiply, Add,
+            Power, Subtract,
+            Divide, Log,
+            Power
+    };
+    double (*unFuncs[])(double) = {
+            Sin, Cos,
+            Tan, NatLog,
+            Sqrt, Abs,
+            Exp
+    };
     while(polNot->size - polNot->firstPos > 0) { // Цикл выполняется до тех пор, пока
                                                  // позиция первого элемента в очереди
                                                  // не будет совпадать с размером очереди.
@@ -279,6 +376,7 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
              * Далее происходит идентичные обработки
              * найденных операторов.
              */
+            //ans[top - 2] = binFuncs[BinaryOperations(Pop(polNot))]
             switch (Pop(polNot)) {
                 case '*':
                     ans[top - 2] *= ans[top - 1];
