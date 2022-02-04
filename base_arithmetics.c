@@ -129,7 +129,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                 }
             }
             if(!FindParam(paramList, name)) {
-                paramList->next = ParamCon(name);
+                ParamCon(paramList, name);
             }
             Push(polNot, '!');
         } else if(symb != ' ') {
@@ -225,7 +225,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
     }
 }
 
-double RearrangementOutput(QUEUE * polNot) {
+double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
     double * ans = (double*) calloc(1, sizeof(double));
     int top = 0, capacity = 1;
     double operand;
@@ -254,6 +254,21 @@ double RearrangementOutput(QUEUE * polNot) {
              * переменная capacity.
              */
             ans[top] = operand;
+            top++;
+            if(top == capacity) {
+                ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
+                capacity *= 2;
+            }
+        } else if(isalpha(Peek(polNot))) {
+            char name[15] = { 0 };
+            int i = 0;
+            while(isalpha(Peek(polNot))) {
+                name[i++] = Pop(polNot);
+            }
+            PARAMETERS * temp = ReturnParam(paramList, name);
+            int tempFirstPos = temp->expr->firstPos;
+            ans[top] = RearrangementOutput(temp->expr, paramList);
+            temp->expr->firstPos = tempFirstPos;
             top++;
             if(top == capacity) {
                 ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));

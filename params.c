@@ -3,13 +3,17 @@
 #include "queue.h"
 #include "params.h"
 
-PARAMETERS * ParamCon(char name[15]) {
+void ParamCon(PARAMETERS * Head, char name[15]) {
+    PARAMETERS * temp = Head;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
     PARAMETERS * NewPar = (PARAMETERS*) malloc(sizeof (PARAMETERS));
     NewPar->next = NULL;
     NewPar->counter = 1;
     strcpy(NewPar->name, name);
     NewPar->expr = (QUEUE*) malloc(sizeof (QUEUE));
-    return NewPar;
+    temp->next = NewPar;
 }
 
 PARAMETERS * MakeHead() {
@@ -40,4 +44,15 @@ int FindParam(PARAMETERS * head, char name[15]) {
         temp = temp->next;
     }
     return 0;
+}
+
+PARAMETERS * ReturnParam(PARAMETERS * Head, char name[15]) {
+    PARAMETERS * temp = Head;
+    while(temp != NULL) {
+        if(strcmp(name, temp->name) == 0) {
+            break;
+        }
+        temp = temp->next;
+    }
+    return temp;
 }
