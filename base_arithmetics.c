@@ -98,7 +98,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
         prior[1] = 1; // ')'
         prior[2] = 3; // '*'
         prior[3] = 2; // '+'
-        prior[4] = 4; // '^'
+        prior[4] = 4; // '^'(
         prior[5] = 2; // '-'
         prior[7] = 3; // '/'
         char temp;
@@ -128,7 +128,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                     symb = Peek(input);
                 }
             }
-            if(!FindParam(paramList, name)) {
+            if(FindParam(paramList, name) == NULL) {
                 ParamCon(paramList, name);
                 //paramList->next = ParamCon(name);
             }
@@ -226,7 +226,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
     }
 }
 
-double RearrangementOutput(QUEUE * polNot) {
+double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
     double * ans = (double*) calloc(1, sizeof(double));
     int top = 0, capacity = 1;
     double operand;
@@ -260,7 +260,23 @@ double RearrangementOutput(QUEUE * polNot) {
                 ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
                 capacity *= 2;
             }
-        } else {
+        } else if (isalpha(Peek(polNot))){
+            char name[15] = {0};
+            int i = 0;
+            while (isalpha(Peek(polNot))) {
+                name[i++] = Pop(polNot);
+            }
+            PARAMETERS * temp = FindParam(paramList, name);
+            if (temp != NULL){
+                ans[top] = temp->val;
+                top++;
+            }
+            if(top == capacity) {
+                ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
+                capacity *= 2;
+            }
+        }
+        else {
             /*
              * Далее происходит идентичные обработки
              * найденных операторов.

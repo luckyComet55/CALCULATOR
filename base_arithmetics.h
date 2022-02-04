@@ -3,6 +3,6 @@
 
 
 void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS * paramList);
-double RearrangementOutput(QUEUE * polNot);
+double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList);
 
 #endif //BASE_ARITHMETICS_H

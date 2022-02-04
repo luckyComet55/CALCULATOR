@@ -29,11 +29,18 @@ int main() {
     for (int i = 0; i < input->size; ++i) {
         printf("%c", input->data[i]);
     }
+    printf("\n");
     ////
     QUEUE * polNot = QueueCon();
     STACK * tempStack = StackCon();
     PARAMETERS * paramList = MakeHead();
     MainProcessing(input, tempStack, polNot, paramList);
+    input = InputData(stdin);
+    while (input->size > 0){
+        ReadParam(paramList, input);
+        input = InputData(stdin);
+    }
+
     //// Debug output. Delete in release version
     printf("\nReverse Polish Notation:\n");
     for (int i = polNot->firstPos; i < polNot->size; ++i) {
@@ -44,7 +51,7 @@ int main() {
     }
     ////
     printf("\nResult:\n");
-    printf("%lf", RearrangementOutput(polNot));
+    printf("%lf", RearrangementOutput(polNot, paramList));
     QueueDel(polNot);
     QueueDel(input);
     DeleteList(paramList);
