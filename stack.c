@@ -1,5 +1,5 @@
-#include "stack.h"
 #include <stdlib.h>
+#include "stack.h"
 /*
  * Данный файл имеет функции, реализующие
  * стек на диамическом массиве типа char.

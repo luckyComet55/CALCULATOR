@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "queue.h"
-#include "stack.h"
+#include <stdio.h>
 #include "params.h"
+#include "stackList.h"
+#include "queueList.h"
 #include "base_arithmetics.h"
 
 
@@ -86,8 +87,23 @@
  *      массив ans.
  * */
 
-int UnaryOperations(char func[15]) {
-    char funcDB[10][15] = {
+typedef enum types {
+    operand,
+    variable,
+    binary,
+    unary,
+} TYPE;
+
+double str_to_val(char const * string) {
+    double value = 0;
+    for (int i = 0; string[i] != 0; ++i) {
+        value = value * 10 + string[i] - 48;
+    }
+    return value;
+}
+
+int UnaryOperations(char * func) {
+    char funcDB[10][256] = {
             {"sin\n"}, {"cos\0"},
             {"tg\0"}, {"ln\0"},
             {"sqrt\0"}, {"abs\0"},
@@ -95,6 +111,7 @@ int UnaryOperations(char func[15]) {
             {"mag\0"}, {"phase\0"}
     };
     for (int i = 0; i < 10; ++i) {
+        //printf("Checking source %s with unary %s\n", func, funcDB[i]);
         if(strcmp(func, funcDB[i]) == 0) {
             return i;
         }
@@ -102,14 +119,15 @@ int UnaryOperations(char func[15]) {
     return -1;
 }
 
-int BinaryOperations(char func[15]) {
-    char funcDB[7][15] = {
+int BinaryOperations(char * func) {
+    char funcDB[7][256] = {
             {"*\0"}, {"+\0"},
             {"^\0"},  {"-\0"},
             {"/\0"}, {"log\0"},
             {"pow\0"}
     };
     for (int i = 0; i < 7; ++i) {
+        //printf("Checking source %s with unary %s\n", func, funcDB[i]);
         if(strcmp(func, funcDB[i]) == 0) {
             return i;
         }
@@ -169,6 +187,154 @@ double Exp(double a) {
     return pow(M_E, a);
 }
 
+int GetPriority(char * func) {
+    if(strcmp(func, "(\0") == 0 || strcmp(func, ")\0") == 0 || strcmp(func, ",\0") == 0) {
+        return 1;
+    } else if(strcmp(func, "^\0") == 0) {
+        return 4;
+    } else if(strcmp(func, "+\0") == 0 || strcmp(func, "-\0") == 0) {
+        return 2;
+    }
+    return 3;
+}
+
+QUEUE * get_args(QUEUE * input) {
+    QUEUE * argsQueue = conf_queue();
+    while(strcmp(get_value(input), ",\0") != 0 && strcmp(get_value(input), ")\0") != 0) {
+        add(argsQueue, erase(input), -1);
+    }
+    free(erase(input));
+    return argsQueue;
+}
+
+void define_args(QUEUE * input, QUEUE * output, PARAMETERS * paramList, int isBinary, int isUnary) {
+    char word[256] = { 0 };
+    //erase(input);
+    if(isBinary) {
+        inf_to_postfix(get_args(input), output, paramList);
+        inf_to_postfix(get_args(input), output, paramList);
+    }
+    if(isUnary) {
+        inf_to_postfix(get_args(input), output, paramList);
+    }
+}
+
+void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
+
+    STACK * operations = init_stack();
+    int localShift = 0;
+    while(input->next != NULL) {
+        char * word = (char*) calloc(256, sizeof(char));
+        for (int i = 0; i < 256; ++i) {
+            word[i] = 0;
+        }
+        strcpy(word, erase(input));
+        if(isdigit(word[0])) {
+            add(output, word, operand);
+        } else if(isalpha(word[0])) {
+            if(BinaryOperations(word) != -1 || UnaryOperations(word) != -1) {
+                free(erase(input));
+                define_args(input, output, paramList, BinaryOperations(word) != -1, UnaryOperations(word) != -1);
+                int tempPrior = GetPriority(word);
+                while(tempPrior <= get_prior(operations)) {
+                    int tempType = check_type(operations);
+                    add(output, pop(operations), tempType);
+                }
+                push(operations, word, tempPrior, BinaryOperations(word) != -1 ? binary : unary);
+            } else {
+                if(!FindParam(paramList, word)) {
+                    ParamCon(paramList, word);
+                }
+                add(output, word, variable);
+            }
+        } else {
+            if(strcmp(word, "(\0") == 0) {
+                localShift = -1;
+                define_args(input, output, paramList, 0, 1);
+                continue;
+            }
+            if(strcmp(word, "-\0") == 0 && localShift == 0) {
+                add(output, "0\0", operand);
+            }
+            int tempPrior = GetPriority(word);
+            while(tempPrior <= get_prior(operations)) {
+                int tempType = check_type(operations);
+                add(output, pop(operations), tempType);
+            }
+            push(operations, word, tempPrior, BinaryOperations(word) != -1 ? binary : unary);
+        }
+        localShift++;
+        free(word);
+    }
+    while(operations->next != NULL) {
+        char * word = (char*) calloc(256, sizeof(char));
+        for (int i = 0; i < 256; ++i) {
+            word[i] = 0;
+        }
+        strcpy(word, pop(operations));
+        add(output, word, BinaryOperations(word) != -1 ? binary : unary);
+        free(word);
+    }
+    delete_queue(input);
+    delete_stack(operations);
+}
+
+double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
+    double * ans = (double*) calloc(256, sizeof(double));
+    int top = 0, capacity = 1;
+    double (*binFuncs[])(double, double) = {
+            Multiply, Add,
+            Power, Subtract,
+            Divide, Log,
+            Power
+    };
+    double (*unFuncs[])(double) = {
+            Sin, Cos,
+            Tan, NatLog,
+            Sqrt, Abs,
+            Exp
+    };
+    while(input->next != NULL) {
+        char * word = (char*) calloc(256, sizeof(char));
+        for (int i = 0; i < 256; ++i) {
+            word[i] = 0;
+        }
+        strcpy(word, erase(input));
+        if(isdigit(word[0])) {
+            ans[top] = str_to_val(word);
+            top++;
+        } else if(isalpha(word[0])) {
+            if(BinaryOperations(word) != -1) {
+                printf("Binary!\n");
+                ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
+                top--;
+            } else if(UnaryOperations(word) != -1) {
+                printf("Unary!\n");
+                ans[top - 1] = unFuncs[UnaryOperations(word)](ans[top - 1]);
+            } else {
+                printf("Parameter '%s'!\n", word);
+                PARAMETERS * temp = ReturnParam(paramList, word);
+                QUEUE * tempExpr = conf_queue();
+                copy_queue(tempExpr, temp->expr);
+                ans[top] = postfix_to_ans(temp->expr, paramList);
+                temp->expr = tempExpr;
+                top++;
+            }
+        } else {
+            ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
+            top--;
+        }
+        if(top == capacity) {
+            ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
+            capacity *= 2;
+        }
+        free(word);
+    }
+    delete_queue(input);
+    return ans[0];
+}
+
+/*
 void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS * paramList) {
     int localShift = 0;
     while(input->size - input->firstPos > 0) { // Цикл выполняется до тех пор, пока
@@ -203,6 +369,7 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                                                // внезапно добавят факториал).
         } else if(isalpha(symb)) {
             char name[15] = { 0 };
+            char opName[15] = { 0 };
             int i = 0;
             while(isalpha(symb)) {
                 Push(polNot, symb);
@@ -213,45 +380,69 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                     symb = Peek(input);
                 }
             }
+            */
+/*if(UnaryOperations(name) != -1 || BinaryOperations(name) != -1) {
+                int tempSize = tempStack->size;
+                if(isalpha(Top(tempStack))) {
+
+                }
+                do {
+                    int j = 0;
+                    if (isalpha(Top(tempStack))) {
+                        while (isalpha(Top(tempStack))) {
+                            opName[j++] = Erase(tempStack);
+                        }
+                    } else if(Top(tempStack) != '_') {
+                        opName[j] = Erase(tempStack);
+                    }
+                } while (GetPriority(name) <= GetPriority(opName));
+            }*//*
+
             if(!FindParam(paramList, name)) {
                 ParamCon(paramList, name);
             }
             Push(polNot, '!');
-        } else if(symb != ' ') {
+        } else if(isgraph(symb)) {
             switch (symb) {
                 case '(':
-                    /*
+                    */
+/*
                      * Каждая открывающая скобка начинает новое подвыражение,
                      * вместе с чем значению localShift приравнивается значение -1.
                      * Так как после каждого повторения цикла localShift инкрементируется,
                      * то к началу следующего он будет равен нулю. Скобка заносится в стек операторов.
-                     */
+                     *//*
+
                     Insert(tempStack, symb);
                     localShift = -1;
                     break;
                 case ')':
-                    /*
+                    */
+/*
                      * Как было сказано при описании переменной temp,
                      * все операторы, стоящие после открывющей скобки,
                      * выгружаются в очередь префиксной записи.
-                     */
+                     *//*
+
                     temp = Erase(tempStack);
                     while(temp != '(') {
                         Push(polNot, temp);
                         temp = Erase(tempStack);
                     }
                     break;
-                /*
+                */
+/*
                  * Далее следуют одинаковые (за исключением минуса)
                  * действия при найденных операторах. Суть такова:
                  * В очередь постфиксной записи выгружаюся все операторы,
-                 * имеющие приоритет ниже, либо такой же, как у рассматриваемого.
+                 * имеющие приоритет выше, либо такой же, как у рассматриваемого.
                  * Это делается до первого встреченного оператора с приоритетом
-                 * выше такового у рассматриваемого. Этим занимается условный цикл
+                 * ниже такового у рассматриваемого. Этим занимается условный цикл
                  * while (действие не будет выполнено ни разу, если первый же встреченный
                  * в стеке оператор имеет преоритет выше). Затем рассматриваемый оператор заносится
                  * в стек tempStack.
-                 */
+                 *//*
+
                 case '*':
                     while(prior[symb % 10] <= prior[Top(tempStack) % 10]) {
                         Push(polNot, Erase((tempStack)));
@@ -265,7 +456,8 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                     Insert(tempStack, symb);
                     break;
                 case '-':
-                    /*
+                    */
+/*
                      * Единственная особенность обработки минуса
                      * состоит в том, что требуется находить случаи
                      * возникновения унарного минуса. Если минус - первый
@@ -273,7 +465,8 @@ void MainProcessing(QUEUE * input, STACK * tempStack, QUEUE * polNot, PARAMETERS
                      * так, то в очередь операндов заносится нуль (и
                      * знак-разделитель после него), после чего
                      * происходит прерывание.
-                     */
+                     *//*
+
                     if (localShift == 0) {
                         Push(polNot, '0');
                         Push(polNot, '!');
@@ -333,15 +526,18 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
                                                  // определяется количеством элементов в нём.
         operand = 0;
         if(isdigit(Peek(polNot))) {
-            /*
+            */
+/*
              * Если первый встреченный элемент - цифра,
              * то начинается преобразование строки в
              * вещественное число.
-             */
+             *//*
+
             while(isdigit(Peek(polNot))) {
                 operand = operand * 10 + Pop(polNot) - 48;
             }
-            /*
+            */
+/*
              * В массиве ans в элемент под индексом top
              * записывается значение найденного операнда.
              * После этого top инкрементируется. Если top
@@ -349,7 +545,8 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
              * перевыделяется в два раза больше памяти,
              * вместе с чем вдвое увеличивается и сама
              * переменная capacity.
-             */
+             *//*
+
             ans[top] = operand;
             top++;
             if(top == capacity) {
@@ -372,11 +569,13 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
                 capacity *= 2;
             }
         } else {
-            /*
+            */
+/*
              * Далее происходит идентичные обработки
              * найденных операторов.
-             */
-            //ans[top - 2] = binFuncs[BinaryOperations(Pop(polNot))]
+             *//*
+
+
             switch (Pop(polNot)) {
                 case '*':
                     ans[top - 2] *= ans[top - 1];
@@ -404,4 +603,4 @@ double RearrangementOutput(QUEUE * polNot, PARAMETERS * paramList) {
 
     // В нулевой ячейке лежит результат вычислений.
     return ans[0];
-}
+}*/

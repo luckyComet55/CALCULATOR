@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
-#include "queue.h"
-#include "stack.h"
+#include "queueList.h"
 #include "params.h"
 #include "base_arithmetics.h"
 
@@ -13,27 +13,59 @@
  */
 QUEUE * InputData(FILE * fr) {
     char elem;
-    QUEUE * input = QueueCon();
+    QUEUE * input = conf_queue();
     elem = (char)getc(fr);
     while (elem != '\n' && elem != EOF) {
-        Push(input, (char) elem);
-        elem = (char) getc(fr);
+        if(isspace(elem)) {
+            elem = (char) getc(fr);
+            continue;
+        }
+        int i = 0;
+        char word[256] = { 0 };
+        if(isdigit(elem)) {
+            while(isdigit(elem)) {
+                word[i++] = elem;
+                elem = (char)getc(fr);
+            }
+        } else if(isalpha(elem)) {
+            word[i++] = elem;
+            elem = (char) getc(fr);
+        } else {
+            word[i] = elem;
+            elem = (char)getc(fr);
+        }
+        add(input, word, -1);
     }
     return input;
 }
 
-void PrintPolish(QUEUE * polNot) {
-    printf("\nReverse Polish Notation:\n");
-    for (int i = polNot->firstPos; i < polNot->size; ++i) {
-        if(isdigit(polNot->data[i]) && isdigit(polNot->data[i + 1]))
-            printf("%c", polNot->data[i]);
-        else if((int)polNot->data[i] != '!')
-            printf("%c ", polNot->data[i]);
+void PrintPolish(QUEUE * postfix_notation) {
+    printf("Reverse Polish Notation:\n");
+    QUEUE * temp = postfix_notation;
+    temp = temp->next;
+    while(temp != NULL) {
+        printf("%s ", temp->value);
+        temp = temp->next;
     }
+    printf("\n");
+}
+
+void PrintExpression(QUEUE * expr) {
+    printf("Expression:\n");
+    QUEUE * temp = expr;
+    temp = temp->next;
+    while(temp != NULL) {
+        printf("%s ", temp->value);
+        temp = temp->next;
+    }
+    printf("\n");
 }
 
 int DefineParam(PARAMETERS * Head, FILE * fr) {
-    char name[15] = { 0 };
+    char * name = (char*) calloc(256, sizeof (char));
+    for (int i = 0; i < 256; ++i) {
+        name[i] = 0;
+    }
     int i = 0;
     char elem;
     elem = (char)getc(fr);
@@ -48,26 +80,18 @@ int DefineParam(PARAMETERS * Head, FILE * fr) {
         elem = (char)getc(fr);
     }
     PARAMETERS * temp = Head;
-    if(FindParam(Head, name)) {
-        while (strcmp(temp->name, name) != 0) {
-            printf("%s\n", temp->name);
-            temp = temp->next;
-        }
-    } else {
+    if(!FindParam(Head, name)) {
         ParamCon(Head, name);
-        while (strcmp(temp->name, name) != 0) {
-            printf("%s\n", temp->name);
-            temp = temp->next;
-        }
+    }
+    while(strcmp(temp->name, name) != 0) {
+        temp = temp->next;
     }
     printf("%s\n", temp->name);
-    STACK * tempStack = StackCon();
-    QUEUE * polNot = QueueCon();
     QUEUE * input = InputData(fr);
-    MainProcessing(input, tempStack, polNot, Head);
-    temp->expr = polNot;
-    QueueDel(input);
-    StackDel(tempStack);
+    QUEUE * output = conf_queue();
+    inf_to_postfix(input, output, Head);
+    temp->expr = output;
+    free(name);
     return 1;
 }
 
@@ -82,7 +106,7 @@ void PrintParams(PARAMETERS * Head) {
     PARAMETERS * temp = Head;
     temp = temp->next;
     while(temp != NULL) {
-        printf("Parameter '%s':", temp->name);
+        printf("Parameter '%s':\n", temp->name);
         PrintPolish(temp->expr);
         temp = temp->next;
     }
@@ -90,29 +114,15 @@ void PrintParams(PARAMETERS * Head) {
 
 int main() {
     FILE * fr = fopen("input", "rt");
-    QUEUE * input;
-    input = InputData(fr);
-    //// Debug output. Delete in release version
-    printf("Expression:\n");
-    for (int i = 0; i < input->size; ++i) {
-        printf("%c", input->data[i]);
-    }
-    ////
-    QUEUE * polNot = QueueCon();
-    STACK * tempStack = StackCon();
-    PARAMETERS * paramList = MakeHead();
-    MainProcessing(input, tempStack, polNot, paramList);
-    FillParams(paramList, fr);
-    //// Debug output. Delete in release version
-    PrintParams(paramList);
-    PrintPolish(polNot);
-    ////
-    printf("\nResult:\n");
-    printf("%lf", RearrangementOutput(polNot, paramList));
-
-    QueueDel(polNot);
-    QueueDel(input);
-    DeleteList(paramList);
-    StackDel(tempStack);
+    QUEUE * input = InputData(fr);
+    PrintExpression(input);
+    QUEUE * postfix_not = conf_queue();
+    PARAMETERS * params = MakeHead();
+    inf_to_postfix(input, postfix_not, params);
+    FillParams(params, fr);
+    //PrintParams(params);
+    PrintPolish(postfix_not);
+    printf("Result:\n%lf", postfix_to_ans(postfix_not, params));
+    DeleteList(params);
     return 0;
 }

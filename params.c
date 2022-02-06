@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
-#include "queue.h"
+#include "queueList.h"
 #include "params.h"
 
-void ParamCon(PARAMETERS * Head, char name[15]) {
+void ParamCon(PARAMETERS * Head, char * name) {
     PARAMETERS * temp = Head;
     while (temp->next != NULL) {
         temp = temp->next;
@@ -11,8 +11,12 @@ void ParamCon(PARAMETERS * Head, char name[15]) {
     PARAMETERS * NewPar = (PARAMETERS*) malloc(sizeof (PARAMETERS));
     NewPar->next = NULL;
     NewPar->counter = 1;
+    NewPar->name = (char*) calloc(256, sizeof (char));
+    for (int i = 0; i < 256; ++i) {
+        NewPar->name[i] = 0;
+    }
     strcpy(NewPar->name, name);
-    NewPar->expr = (QUEUE*) malloc(sizeof (QUEUE));
+    NewPar->expr = conf_queue();
     temp->next = NewPar;
 }
 
@@ -20,6 +24,11 @@ PARAMETERS * MakeHead() {
     PARAMETERS * Head = (PARAMETERS*) malloc(sizeof (PARAMETERS));
     Head->counter = 0;
     Head->next = NULL;
+    Head->name = (char*) calloc(256, sizeof (char));
+    for (int i = 0; i < 256; ++i) {
+        Head->name[i] = 0;
+    }
+    Head->expr = conf_queue();
     strcpy(Head->name, "HeadNone\0");
     return Head;
 }
@@ -29,12 +38,14 @@ void DeleteList(PARAMETERS * Head) {
     PARAMETERS * temp2 = temp1;
     while(temp2 != NULL) {
         temp2 = temp2->next;
+        delete_queue(temp1->expr);
+        free(temp1->name);
         free(temp1);
         temp1 = temp2;
     }
 }
 
-int FindParam(PARAMETERS * head, char name[15]) {
+int FindParam(PARAMETERS * head, char * name) {
     PARAMETERS * temp = head;
     while(temp != NULL) {
         if(strcmp(name, temp->name) == 0) {
@@ -46,7 +57,7 @@ int FindParam(PARAMETERS * head, char name[15]) {
     return 0;
 }
 
-PARAMETERS * ReturnParam(PARAMETERS * Head, char name[15]) {
+PARAMETERS * ReturnParam(PARAMETERS * Head, char * name) {
     PARAMETERS * temp = Head;
     while(temp != NULL) {
         if(strcmp(name, temp->name) == 0) {
