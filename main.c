@@ -26,7 +26,8 @@ QUEUE * InputData(FILE * fr) {
             word[i] = 0;
         }
         if(isdigit(elem)) {
-            while(isdigit(elem)) {
+            while(isdigit(elem) || elem == '.') {
+                printf("%c", elem);
                 word[i++] = elem;
                 elem = (char)getc(fr);
             }

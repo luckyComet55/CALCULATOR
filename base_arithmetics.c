@@ -96,9 +96,25 @@ typedef enum types {
 
 double str_to_val(char const * string) {
     double value = 0;
-    for (int i = 0; string[i] != 0; ++i) {
-        value = value * 10 + string[i] - 48;
+    int flag_dot = 0;
+    int index = 0;
+    for (; string[index] != 0; ++index) {
+        if(string[index] == '.') {
+            flag_dot = 1;
+            index++;
+            break;
+        }
+        value = value * 10 + string[index] - 48;
     }
+    if(flag_dot) {
+        int exp = 10;
+        while(string[index] != 0) {
+            value += (double)(string[index] - 48) / exp;
+            index++;
+            exp *= 10;
+        }
+    }
+    printf("Translated from string to double: %s -- %lf\n", string, value);
     return value;
 }
 
@@ -320,6 +336,7 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
         printf("\nWord: %s\nType: %d\n", word, type);
         switch (type) {
             case operand:
+                printf("Operand: %s\n", word);
                 ans[top] = str_to_val(word);
                 top++;
                 break;
