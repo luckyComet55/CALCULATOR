@@ -32,7 +32,7 @@ QUEUE * InputData(FILE * fr) {
                 elem = (char)getc(fr);
             }
         } else if(isalpha(elem)) {
-            while(isalpha(elem)) {
+            while(isalpha(elem) || isdigit(elem) || elem == '_') {
                 word[i++] = elem;
                 elem = (char) getc(fr);
             }

@@ -114,7 +114,6 @@ double str_to_val(char const * string) {
             exp *= 10;
         }
     }
-    printf("Translated from string to double: %s -- %lf\n", string, value);
     return value;
 }
 
