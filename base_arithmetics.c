@@ -200,7 +200,14 @@ int GetPriority(char * func) {
 
 QUEUE * get_args(QUEUE * input) {
     QUEUE * argsQueue = conf_queue();
+    /*QUEUE * temp = input;
+    while(temp != NULL) {
+        printf("%s ", temp->value);
+        temp = temp->next;
+    }
+    printf("\n");*/
     while(strcmp(get_value(input), ",\0") != 0 && strcmp(get_value(input), ")\0") != 0) {
+        printf("%s ", get_value(input));
         add(argsQueue, erase(input), -1);
     }
     free(erase(input));

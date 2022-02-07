@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "queueList.h"
 
 QUEUE * conf_queue() {
@@ -31,6 +32,10 @@ void add(QUEUE * head, char * value, int type) {
 }
 
 char * erase(QUEUE * head) {
+    if(head->next == NULL) {
+        printf("\nOops! Memory limit!\n");
+        return "\0\0";
+    }
     QUEUE * temp = head->next;
     char * value = (char*) calloc(256, sizeof(char));
     for (int i = 0; i < 256; ++i) {
@@ -65,10 +70,10 @@ char * get_value(QUEUE * head) {
     if(head->next == NULL) {
         return "\0\0";
     }
-    QUEUE * temp = head;
-    while (temp->next != NULL) {
+    QUEUE * temp = head->next;
+    /*while (temp->next != NULL) {
         temp = temp->next;
-    }
+    }*/
     return temp->value;
 }
 

@@ -21,20 +21,26 @@ QUEUE * InputData(FILE * fr) {
             continue;
         }
         int i = 0;
-        char word[256] = { 0 };
+        char * word = (char*) calloc(256, sizeof (char));
+        for (int j = 0; j < 256; ++j) {
+            word[i] = 0;
+        }
         if(isdigit(elem)) {
             while(isdigit(elem)) {
                 word[i++] = elem;
                 elem = (char)getc(fr);
             }
         } else if(isalpha(elem)) {
-            word[i++] = elem;
-            elem = (char) getc(fr);
+            while(isalpha(elem)) {
+                word[i++] = elem;
+                elem = (char) getc(fr);
+            }
         } else {
             word[i] = elem;
             elem = (char)getc(fr);
         }
         add(input, word, -1);
+        free(word);
     }
     return input;
 }
@@ -113,7 +119,7 @@ void PrintParams(PARAMETERS * Head) {
 }
 
 int main() {
-    FILE * fr = fopen("input", "rt");
+    FILE * fr = fopen("C:\\Users\\kurik\\CLionProjects\\CALCULATOR\\input", "rt");
     QUEUE * input = InputData(fr);
     PrintExpression(input);
     QUEUE * postfix_not = conf_queue();
