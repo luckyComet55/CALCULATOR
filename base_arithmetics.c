@@ -104,7 +104,7 @@ double str_to_val(char const * string) {
 
 int UnaryOperations(char * func) {
     char funcDB[10][256] = {
-            {"sin\n"}, {"cos\0"},
+            {"sin\0"}, {"cos\0"},
             {"tg\0"}, {"ln\0"},
             {"sqrt\0"}, {"abs\0"},
             {"exp\0"}, {"imag\0"},
@@ -152,14 +152,17 @@ double Divide(double a, double b) {
 }
 
 double Log(double a, double b) {
+    printf("Args: %lf %lf\nResult: %lf\n", a, b, log(b) / log(a));
     return log(b) / log(a);
 }
 
 double NatLog(double a) {
+    printf("Args: %lf\nResult: %lf\n", a, log(a));
     return log(a);
 }
 
 double Sin(double a) {
+    printf("Args: %lf\nResult: %lf\n", a, sin(a));
     return sin(a);
 }
 
@@ -194,35 +197,41 @@ int GetPriority(char * func) {
         return 4;
     } else if(strcmp(func, "+\0") == 0 || strcmp(func, "-\0") == 0) {
         return 2;
+    } else if(strcmp(func, "*\0") == 0 || strcmp(func, "/\0") == 0) {
+        return 3;
     }
-    return 3;
+    return 5;
 }
 
-QUEUE * get_args(QUEUE * input) {
+QUEUE * get_args(QUEUE * input, int mark_if_comma) {
     QUEUE * argsQueue = conf_queue();
-    /*QUEUE * temp = input;
-    while(temp != NULL) {
-        printf("%s ", temp->value);
-        temp = temp->next;
+    int bracketCounter = 1;
+    char * word = (char*) calloc(256, sizeof (char));
+    for (int i = 0; i < 256; ++i) {
+        word[i] = 0;
     }
-    printf("\n");*/
-    while(strcmp(get_value(input), ",\0") != 0 && strcmp(get_value(input), ")\0") != 0) {
-        printf("%s ", get_value(input));
+    strcpy(word, get_value(input));
+    while(bracketCounter > 0){
+        if (bracketCounter == 1 && (strcmp(get_value(input), mark_if_comma ? ",\0" : ")\0") == 0)) {
+            bracketCounter--;
+            free(erase(input));
+            continue;
+        }
+        bracketCounter += (strcmp(get_value(input), "(\0") == 0);
+        bracketCounter -= (strcmp(get_value(input), ")\0") == 0);
         add(argsQueue, erase(input), -1);
     }
-    free(erase(input));
+    free(word);
     return argsQueue;
 }
 
 void define_args(QUEUE * input, QUEUE * output, PARAMETERS * paramList, int isBinary, int isUnary) {
-    char word[256] = { 0 };
-    //erase(input);
     if(isBinary) {
-        inf_to_postfix(get_args(input), output, paramList);
-        inf_to_postfix(get_args(input), output, paramList);
+        inf_to_postfix(get_args(input, 1), output, paramList);
+        inf_to_postfix(get_args(input, 0), output, paramList);
     }
     if(isUnary) {
-        inf_to_postfix(get_args(input), output, paramList);
+        inf_to_postfix(get_args(input, 0), output, paramList);
     }
 }
 
@@ -306,8 +315,37 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
         for (int i = 0; i < 256; ++i) {
             word[i] = 0;
         }
+        int type = get_type(input);
         strcpy(word, erase(input));
-        if(isdigit(word[0])) {
+        printf("\nWord: %s\nType: %d\n", word, type);
+        switch (type) {
+            case operand:
+                ans[top] = str_to_val(word);
+                top++;
+                break;
+            case variable:
+                printf("Parameter '%s'!\n", word);
+                PARAMETERS * temp = ReturnParam(paramList, word);
+                QUEUE * tempExpr = conf_queue();
+                copy_queue(tempExpr, temp->expr);
+                ans[top] = postfix_to_ans(temp->expr, paramList);
+                temp->expr = tempExpr;
+                top++;
+                break;
+            case binary:
+                printf("Binary!\n");
+                ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
+                top--;
+                break;
+            case unary:
+                printf("Unary!\n");
+                ans[top - 1] = unFuncs[UnaryOperations(word)](ans[top - 1]);
+                break;
+            default:
+                printf("Something is wrong!\n");
+                break;
+        }
+        /*if(isdigit(word[0])) {
             ans[top] = str_to_val(word);
             top++;
         } else if(isalpha(word[0])) {
@@ -330,7 +368,7 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
         } else {
             ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
             top--;
-        }
+        }*/
         if(top == capacity) {
             ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
             capacity *= 2;

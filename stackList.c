@@ -37,7 +37,7 @@ void remove_node(STACK * head) {
 
 char * pop(STACK * head) {
     if(head->next == NULL) {
-        return "!\0";
+        return "!!!\0";
     }
     char * temp = (char*) calloc(256, sizeof (char));
     for (int i = 0; i < 256; ++i) {

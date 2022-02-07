@@ -59,10 +59,10 @@ int get_type(QUEUE * head) {
     if(head->next == NULL) {
         return -1;
     }
-    QUEUE * temp = head;
-    while (temp->next != NULL) {
+    QUEUE * temp = head->next;
+    /*while (temp->next != NULL) {
         temp = temp->next;
-    }
+    }*/
     return temp->type;
 }
 
