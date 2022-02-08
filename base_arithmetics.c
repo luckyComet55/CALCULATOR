@@ -131,7 +131,7 @@ int UnaryOperations(char * func) {
             {"imag\0"}, {"mag\0"},
             {"phase\0"}
     };
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 11; ++i) {
         //printf("Checking source %s with unary %s\n", func, funcDB[i]);
         if(strcmp(func, funcDB[i]) == 0) {
             return i;

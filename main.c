@@ -122,7 +122,7 @@ void PrintParams(PARAMETERS * Head) {
 }
 
 int main() {
-    FILE * fr = fopen("C:\\Users\\kurik\\CLionProjects\\CALCULATOR\\input", "rt");
+    FILE * fr = fopen("input", "rt");
     QUEUE * input = InputData(fr);
     PrintExpression(input);
     QUEUE * postfix_not = conf_queue();
