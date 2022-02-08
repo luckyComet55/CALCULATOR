@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <complex.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "queueList.h"
 #include "params.h"
 #include "base_arithmetics.h"
@@ -26,7 +28,7 @@ QUEUE * InputData(FILE * fr) {
             word[i] = 0;
         }
         if(isdigit(elem)) {
-            while(isdigit(elem) || elem == '.') {
+            while(isdigit(elem) || elem == '.' || elem == 'j') {
                 printf("%c", elem);
                 word[i++] = elem;
                 elem = (char)getc(fr);
@@ -120,16 +122,27 @@ void PrintParams(PARAMETERS * Head) {
 }
 
 int main() {
-    FILE * fr = fopen("input", "rt");
+    FILE * fr = fopen("C:\\Users\\kurik\\CLionProjects\\CALCULATOR\\input", "rt");
     QUEUE * input = InputData(fr);
     PrintExpression(input);
     QUEUE * postfix_not = conf_queue();
     PARAMETERS * params = MakeHead();
     inf_to_postfix(input, postfix_not, params);
     FillParams(params, fr);
-    //PrintParams(params);
     PrintPolish(postfix_not);
-    printf("Result:\n%lf", postfix_to_ans(postfix_not, params));
+    double complex ans = postfix_to_ans(postfix_not, params);
+    printf("Result:\n");
+    if(creal(ans) == 0) {
+        printf("%lfi", cimag(ans));
+    } else if(cimag(ans) == 0) {
+        printf("%lf", creal(ans));
+    } else {
+        if(cimag(ans) > 0) {
+            printf("%lf+%lfi", creal(ans), creal(ans));
+        } else {
+            printf("%lf%lfi", creal(ans), creal(ans));
+        }
+    }
     DeleteList(params);
     return 0;
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
+#include <complex.h>
 #include "params.h"
 #include "stackList.h"
 #include "queueList.h"
@@ -101,17 +102,18 @@ double str_to_val(char const * string) {
     double value = 0;
     int flag_dot = 0;
     int index = 0;
-    for (; string[index] != 0; ++index) {
+    while (string[index] != 0 && string[index] != 'j') {
         if(string[index] == '.') {
             flag_dot = 1;
             index++;
             break;
         }
         value = value * 10 + string[index] - 48;
+        index++;
     }
     if(flag_dot) {
         int exp = 10;
-        while(string[index] != 0) {
+        while(string[index] != 0 && string[index] != 'j') {
             value += (double)(string[index] - 48) / exp;
             index++;
             exp *= 10;
@@ -121,12 +123,13 @@ double str_to_val(char const * string) {
 }
 
 int UnaryOperations(char * func) {
-    char funcDB[10][256] = {
+    char funcDB[11][256] = {
             {"sin\0"}, {"cos\0"},
             {"tg\0"}, {"ln\0"},
             {"sqrt\0"}, {"abs\0"},
-            {"exp\0"}, {"imag\0"},
-            {"mag\0"}, {"phase\0"}
+            {"exp\0"}, {"real\0"},
+            {"imag\0"}, {"mag\0"},
+            {"phase\0"}
     };
     for (int i = 0; i < 10; ++i) {
         //printf("Checking source %s with unary %s\n", func, funcDB[i]);
@@ -153,59 +156,76 @@ int BinaryOperations(char * func) {
     return -1;
 }
 
-double Add(double a, double b) {
+double complex Add(double complex a, double complex b) {
     return a + b;
 }
 
-double Subtract(double a, double b) {
+double complex Subtract(double complex a, double complex b) {
+    //printf("")
     return a - b;
 }
 
-double Multiply(double a, double b) {
+double complex Multiply(double complex a, double complex b) {
     return a * b;
 }
 
-double Divide(double a, double b) {
+double complex Divide(double complex a, double complex b) {
     return a / b;
 }
 
-double Log(double a, double b) {
+double complex Log(double complex a, double complex b) {
     printf("Args: %lf %lf\nResult: %lf\n", a, b, log(b) / log(a));
-    return log(b) / log(a);
+    return clog(b) / clog(a);
 }
 
-double NatLog(double a) {
+double complex NatLog(double complex a) {
     printf("Args: %lf\nResult: %lf\n", a, log(a));
-    return log(a);
+    return clog(a);
 }
 
-double Sin(double a) {
-    printf("Args: %lf\nResult: %lf\n", a, sin(a));
-    return sin(a);
+double complex Sin(double complex a) {
+    //printf("Args: \nResult: %lf\n", a, sin(a));
+    return csin(a);
 }
 
-double Cos(double a) {
-    return cos(a);
+double complex Cos(double complex a) {
+    return ccos(a);
 }
 
-double Tan(double a) {
-    return tan(a);
+double complex Tan(double complex a) {
+    return ctan(a);
 }
 
-double Sqrt(double a) {
-    return sqrt(a);
+double complex Sqrt(double complex a) {
+    return csqrt(a);
 }
 
-double Power(double a, double b) {
-    return pow(a, b);
+double complex Power(double complex a, double complex b) {
+    return cpow(a, b);
 }
 
-double Abs(double a) {
-    return a * pow(-1, (a < 0));
+double complex Abs(double complex a) {
+    double complex b = cabs(a);
+    return b;
 }
 
-double Exp(double a) {
-    return pow(M_E, a);
+double complex Exp(double complex a) {
+    return cpow(M_E, a);
+}
+
+double complex Real(double complex a) {
+    double complex b = creal(a);
+    return b;
+}
+
+double complex Imag(double complex a) {
+    double complex b = cimag(a);
+    return b;
+}
+
+double complex Phase(double complex a) {
+    double complex b = carg(a);
+    return b;
 }
 
 int GetPriority(char * func) {
@@ -264,7 +284,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
         }
         strcpy(word, erase(input));
         if(isdigit(word[0])) {
-            add(output, word, operand);
+            add(output, word, word[strlen(word) - 1] == 'j' ? imaginary : operand);
         } else if(isalpha(word[0])) {
             if(BinaryOperations(word) != -1 || UnaryOperations(word) != -1) {
                 free(erase(input));
@@ -281,7 +301,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
                 } else if(strcmp(word, "e\0") == 0) {
                     add(output, word, e_Number);
                 } else if(strcmp(word, "j\0") == 0) {
-                    add(output, word, imaginary);
+                    add(output, "1\0", imaginary);
                 } else {
                     if (!FindParam(paramList, word)) {
                         ParamCon(paramList, word);
@@ -321,20 +341,22 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
     delete_stack(operations);
 }
 
-double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
-    double * ans = (double*) calloc(256, sizeof(double));
+double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
+    double complex * ans = (double complex*) calloc(256, sizeof(double complex));
     int top = 0, capacity = 1;
-    double (*binFuncs[])(double, double) = {
+    double complex (*binFuncs[])(double complex, double complex) = {
             Multiply, Add,
             Power, Subtract,
             Divide, Log,
             Power
     };
-    double (*unFuncs[])(double) = {
+    double complex (*unFuncs[])(double complex) = {
             Sin, Cos,
             Tan, NatLog,
             Sqrt, Abs,
-            Exp
+            Exp, Real,
+            Imag, Abs,
+            Phase
     };
     while(input->next != NULL) {
         char * word = (char*) calloc(256, sizeof(char));
@@ -348,6 +370,11 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
             case operand:
                 printf("Operand: %s\n", word);
                 ans[top] = str_to_val(word);
+                top++;
+                break;
+            case imaginary:
+                printf("Imaginary number: %s\n", word);
+                ans[top] = str_to_val(word) * I;
                 top++;
                 break;
             case variable:
@@ -380,32 +407,8 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
                 printf("Something is wrong!\n");
                 break;
         }
-        /*if(isdigit(word[0])) {
-            ans[top] = str_to_val(word);
-            top++;
-        } else if(isalpha(word[0])) {
-            if(BinaryOperations(word) != -1) {
-                printf("Binary!\n");
-                ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
-                top--;
-            } else if(UnaryOperations(word) != -1) {
-                printf("Unary!\n");
-                ans[top - 1] = unFuncs[UnaryOperations(word)](ans[top - 1]);
-            } else {
-                printf("Parameter '%s'!\n", word);
-                PARAMETERS * temp = ReturnParam(paramList, word);
-                QUEUE * tempExpr = conf_queue();
-                copy_queue(tempExpr, temp->expr);
-                ans[top] = postfix_to_ans(temp->expr, paramList);
-                temp->expr = tempExpr;
-                top++;
-            }
-        } else {
-            ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
-            top--;
-        }*/
         if(top == capacity) {
-            ans = (double*) realloc(ans, capacity * 2 * sizeof(double ));
+            ans = (double complex*) realloc(ans, capacity * 2 * sizeof(double complex));
             capacity *= 2;
         }
         free(word);
