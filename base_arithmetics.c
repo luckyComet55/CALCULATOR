@@ -92,6 +92,9 @@ typedef enum types {
     variable,
     binary,
     unary,
+    PI_Number,
+    e_Number,
+    imaginary
 } TYPE;
 
 double str_to_val(char const * string) {
@@ -273,10 +276,18 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
                 }
                 push(operations, word, tempPrior, BinaryOperations(word) != -1 ? binary : unary);
             } else {
-                if(!FindParam(paramList, word)) {
-                    ParamCon(paramList, word);
+                if(strcmp(word, "PI\0") == 0) {
+                    add(output, word, PI_Number);
+                } else if(strcmp(word, "e\0") == 0) {
+                    add(output, word, e_Number);
+                } else if(strcmp(word, "j\0") == 0) {
+                    add(output, word, imaginary);
+                } else {
+                    if (!FindParam(paramList, word)) {
+                        ParamCon(paramList, word);
+                    }
+                    add(output, word, variable);
                 }
-                add(output, word, variable);
             }
         } else {
             if(strcmp(word, "(\0") == 0) {
@@ -356,6 +367,14 @@ double postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
             case unary:
                 printf("Unary!\n");
                 ans[top - 1] = unFuncs[UnaryOperations(word)](ans[top - 1]);
+                break;
+            case PI_Number:
+                ans[top] = M_PI;
+                top++;
+                break;
+            case e_Number:
+                ans[top] = M_E;
+                top++;
                 break;
             default:
                 printf("Something is wrong!\n");
