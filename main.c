@@ -3,7 +3,6 @@
 #include <complex.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "queueList.h"
 #include "params.h"
 #include "base_arithmetics.h"
@@ -138,9 +137,9 @@ int main() {
         printf("%lf", creal(ans));
     } else {
         if(cimag(ans) > 0) {
-            printf("%lf+%lfi", creal(ans), creal(ans));
+            printf("%lf+%lfi", creal(ans), cimag(ans));
         } else {
-            printf("%lf%lfi", creal(ans), creal(ans));
+            printf("%lf%lfi", creal(ans), cimag(ans));
         }
     }
     DeleteList(params);
