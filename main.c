@@ -1,73 +1,11 @@
 #include <stdio.h>
-#include <ctype.h>
 #include <complex.h>
 #include <stdlib.h>
 #include <string.h>
+#include "strings_analysis.h"
 #include "queueList.h"
 #include "params.h"
 #include "base_arithmetics.h"
-
-/*
- * Функция-обработчик входных
- * данных из файла. Возвращает адрес
- * на очередь с входными данными.
- */
-QUEUE * InputData(FILE * fr) {
-    char elem;
-    QUEUE * input = conf_queue();
-    elem = (char)getc(fr);
-    while (elem != '\n' && elem != EOF) {
-        if(isspace(elem)) {
-            elem = (char) getc(fr);
-            continue;
-        }
-        int i = 0;
-        char * word = (char*) calloc(256, sizeof (char));
-        for (int j = 0; j < 256; ++j) {
-            word[i] = 0;
-        }
-        if(isdigit(elem)) {
-            while(isdigit(elem) || elem == '.' || elem == 'j') {
-                printf("%c", elem);
-                word[i++] = elem;
-                elem = (char)getc(fr);
-            }
-        } else if(isalpha(elem)) {
-            while(isalpha(elem) || isdigit(elem) || elem == '_') {
-                word[i++] = elem;
-                elem = (char) getc(fr);
-            }
-        } else {
-            word[i] = elem;
-            elem = (char)getc(fr);
-        }
-        add(input, word, -1);
-        free(word);
-    }
-    return input;
-}
-
-void PrintPolish(QUEUE * postfix_notation) {
-    printf("Reverse Polish Notation:\n");
-    QUEUE * temp = postfix_notation;
-    temp = temp->next;
-    while(temp != NULL) {
-        printf("%s ", temp->value);
-        temp = temp->next;
-    }
-    printf("\n");
-}
-
-void PrintExpression(QUEUE * expr) {
-    printf("Expression:\n");
-    QUEUE * temp = expr;
-    temp = temp->next;
-    while(temp != NULL) {
-        printf("%s ", temp->value);
-        temp = temp->next;
-    }
-    printf("\n");
-}
 
 int DefineParam(PARAMETERS * Head, FILE * fr) {
     char * name = (char*) calloc(256, sizeof (char));
@@ -95,7 +33,7 @@ int DefineParam(PARAMETERS * Head, FILE * fr) {
         temp = temp->next;
     }
     printf("%s\n", temp->name);
-    QUEUE * input = InputData(fr);
+    QUEUE * input = input_data(fr);
     QUEUE * output = conf_queue();
     inf_to_postfix(input, output, Head);
     temp->expr = output;
@@ -110,38 +48,18 @@ void FillParams(PARAMETERS * Head, FILE * fr) {
     } while (a);
 }
 
-void PrintParams(PARAMETERS * Head) {
-    PARAMETERS * temp = Head;
-    temp = temp->next;
-    while(temp != NULL) {
-        printf("Parameter '%s':\n", temp->name);
-        PrintPolish(temp->expr);
-        temp = temp->next;
-    }
-}
-
 int main() {
-    FILE * fr = fopen("input", "rt");
-    QUEUE * input = InputData(fr);
-    PrintExpression(input);
+    FILE * fr = fopen("C:\\Users\\kurik\\CLionProjects\\CALCULATOR\\input", "rt");
+    QUEUE * input = input_data(fr);
+    print_expr(input);
     QUEUE * postfix_not = conf_queue();
     PARAMETERS * params = MakeHead();
     inf_to_postfix(input, postfix_not, params);
     FillParams(params, fr);
-    PrintPolish(postfix_not);
+    print_postfix(postfix_not);
     double complex ans = postfix_to_ans(postfix_not, params);
-    printf("Result:\n");
-    if(creal(ans) == 0) {
-        printf("%lfi", cimag(ans));
-    } else if(cimag(ans) == 0) {
-        printf("%lf", creal(ans));
-    } else {
-        if(cimag(ans) > 0) {
-            printf("%lf+%lfi", creal(ans), cimag(ans));
-        } else {
-            printf("%lf%lfi", creal(ans), cimag(ans));
-        }
-    }
+    print_res(ans);
     DeleteList(params);
+    fclose(fr);
     return 0;
 }

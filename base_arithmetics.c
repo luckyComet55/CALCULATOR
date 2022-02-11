@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <complex.h>
+#include "strings_analysis.h"
 #include "params.h"
 #include "stackList.h"
 #include "queueList.h"
@@ -99,64 +100,6 @@ typedef enum types {
     imaginary
 } TYPE;
 
-double str_to_val(char const * string) {
-    double value = 0;
-    int flag_dot = 0;
-    int index = 0;
-    while (string[index] != 0 && string[index] != 'j') {
-        if(string[index] == '.') {
-            flag_dot = 1;
-            index++;
-            break;
-        }
-        value = value * 10 + string[index] - 48;
-        index++;
-    }
-    if(flag_dot) {
-        int exp = 10;
-        while(string[index] != 0 && string[index] != 'j') {
-            value += (double)(string[index] - 48) / exp;
-            index++;
-            exp *= 10;
-        }
-    }
-    return value;
-}
-
-int UnaryOperations(char * func) {
-    char funcDB[11][256] = {
-            {"sin\0"}, {"cos\0"},
-            {"tg\0"}, {"ln\0"},
-            {"sqrt\0"}, {"abs\0"},
-            {"exp\0"}, {"real\0"},
-            {"imag\0"}, {"mag\0"},
-            {"phase\0"}
-    };
-    for (int i = 0; i < 11; ++i) {
-        //printf("Checking source %s with unary %s\n", func, funcDB[i]);
-        if(strcmp(func, funcDB[i]) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-int BinaryOperations(char * func) {
-    char funcDB[7][256] = {
-            {"*\0"}, {"+\0"},
-            {"^\0"},  {"-\0"},
-            {"/\0"}, {"log\0"},
-            {"pow\0"}
-    };
-    for (int i = 0; i < 7; ++i) {
-        //printf("Checking source %s with unary %s\n", func, funcDB[i]);
-        if(strcmp(func, funcDB[i]) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 QUEUE * get_args(QUEUE * input, int mark_if_comma) {
     QUEUE * argsQueue = conf_queue();
     int bracketCounter = 1;
@@ -202,15 +145,15 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
         if(isdigit(word[0])) {
             add(output, word, word[strlen(word) - 1] == 'j' ? imaginary : operand);
         } else if(isalpha(word[0])) {
-            if(BinaryOperations(word) != -1 || UnaryOperations(word) != -1) {
+            if(binary_operations(word) != -1 || unary_operations(word) != -1) {
                 free(erase(input));
-                define_args(input, output, paramList, BinaryOperations(word) != -1, UnaryOperations(word) != -1);
+                define_args(input, output, paramList, binary_operations(word) != -1, unary_operations(word) != -1);
                 int tempPrior = set_priority(word);
                 while(tempPrior <= get_prior(operations)) {
                     int tempType = check_type(operations);
                     add(output, pop(operations), tempType);
                 }
-                push(operations, word, tempPrior, BinaryOperations(word) != -1 ? binary : unary);
+                push(operations, word, tempPrior, binary_operations(word) != -1 ? binary : unary);
             } else {
                 if(strcmp(word, "PI\0") == 0) {
                     add(output, word, PI_Number);
@@ -239,7 +182,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
                 int tempType = check_type(operations);
                 add(output, pop(operations), tempType);
             }
-            push(operations, word, tempPrior, BinaryOperations(word) != -1 ? binary : unary);
+            push(operations, word, tempPrior, binary_operations(word) != -1 ? binary : unary);
         }
         localShift++;
         free(word);
@@ -250,7 +193,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
             word[i] = 0;
         }
         strcpy(word, pop(operations));
-        add(output, word, BinaryOperations(word) != -1 ? binary : unary);
+        add(output, word, binary_operations(word) != -1 ? binary : unary);
         free(word);
     }
     delete_queue(input);
@@ -304,12 +247,12 @@ double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
                 break;
             case binary:
                 printf("Binary!\n");
-                ans[top - 2] = binFuncs[BinaryOperations(word)](ans[top - 2], ans[top - 1]);
+                ans[top - 2] = binFuncs[binary_operations(word)](ans[top - 2], ans[top - 1]);
                 top--;
                 break;
             case unary:
                 printf("Unary!\n");
-                ans[top - 1] = unFuncs[UnaryOperations(word)](ans[top - 1]);
+                ans[top - 1] = unFuncs[unary_operations(word)](ans[top - 1]);
                 break;
             case PI_Number:
                 ans[top] = M_PI;
