@@ -66,7 +66,7 @@ int get_type(QUEUE * head) {
     return temp->type;
 }
 
-char * get_value(QUEUE * head) {
+char * get_string(QUEUE * head) {
     if(head->next == NULL) {
         return "\0\0";
     }

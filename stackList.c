@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <complex.h>
 #include "stackList.h"
 
 STACK * init_stack() {
@@ -31,13 +32,17 @@ void push(STACK * head, char * name, int priority, int type) {
 void remove_node(STACK * head) {
     STACK * temp = head->next;
     head->next = temp->next;
-    free(temp->name);
+    if(temp->name == NULL) {
+        exit(100);
+    } else {
+        free(temp->name);
+    }
     free(temp);
 }
 
 char * pop(STACK * head) {
     if(head->next == NULL) {
-        return "!!!\0";
+        exit(-1);
     }
     char * temp = (char*) calloc(256, sizeof (char));
     for (int i = 0; i < 256; ++i) {
@@ -48,18 +53,32 @@ char * pop(STACK * head) {
     return temp;
 }
 
+double complex get_value(STACK * head) {
+    return head->next->value;
+}
+
+void push_value(STACK * head, double complex val) {
+    STACK * newNode = (STACK*) malloc(sizeof (STACK));
+    newNode->next = head->next;
+    newNode->value = val;
+    newNode->name = (char*) malloc(sizeof (char));
+    head->next = newNode;
+}
+
+double complex pop_value(STACK * head) {
+    if(head->next == NULL) {
+        exit(-1);
+    }
+    double complex val = head->next->value;
+    remove_node(head);
+    return val;
+}
+
 int get_prior(STACK * head) {
     if(head->next == NULL) {
         return -1;
     }
     return head->next->priority;
-}
-
-char * get_name(STACK * head) {
-    if(head->next == NULL) {
-        return "\0\0";
-    }
-    return head->next->name;
 }
 
 void delete_stack(STACK * head) {

@@ -107,15 +107,15 @@ QUEUE * get_args(QUEUE * input, int mark_if_comma) {
     for (int i = 0; i < 256; ++i) {
         word[i] = 0;
     }
-    strcpy(word, get_value(input));
+    strcpy(word, get_string(input));
     while(bracketCounter > 0){
-        if (bracketCounter == 1 && (strcmp(get_value(input), mark_if_comma ? ",\0" : ")\0") == 0)) {
+        if (bracketCounter == 1 && (strcmp(get_string(input), mark_if_comma ? ",\0" : ")\0") == 0)) {
             bracketCounter--;
             free(erase(input));
             continue;
         }
-        bracketCounter += (strcmp(get_value(input), "(\0") == 0);
-        bracketCounter -= (strcmp(get_value(input), ")\0") == 0);
+        bracketCounter += (strcmp(get_string(input), "(\0") == 0);
+        bracketCounter -= (strcmp(get_string(input), ")\0") == 0);
         add(argsQueue, erase(input), -1);
     }
     free(word);
@@ -201,7 +201,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
 }
 
 double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
-    double complex * ans = (double complex*) calloc(256, sizeof(double complex));
+    STACK * answer = init_stack();
     int top = 0, capacity = 1;
     double complex (*binFuncs[])(double complex, double complex) = {
             Multiply, Add,
@@ -218,6 +218,7 @@ double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
             Phase
     };
     while(input->next != NULL) {
+        double complex args[2];
         char * word = (char*) calloc(256, sizeof(char));
         for (int i = 0; i < 256; ++i) {
             word[i] = 0;
@@ -228,12 +229,12 @@ double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
         switch (type) {
             case operand:
                 printf("Operand: %s\n", word);
-                ans[top] = str_to_val(word);
+                push_value(answer, str_to_val(word));
                 top++;
                 break;
             case imaginary:
                 printf("Imaginary number: %s\n", word);
-                ans[top] = str_to_val(word) * I;
+                push_value(answer, str_to_val(word) * I);
                 top++;
                 break;
             case variable:
@@ -241,37 +242,38 @@ double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
                 PARAMETERS * temp = ReturnParam(paramList, word);
                 QUEUE * tempExpr = conf_queue();
                 copy_queue(tempExpr, temp->expr);
-                ans[top] = postfix_to_ans(temp->expr, paramList);
+                push_value(answer, postfix_to_ans(temp->expr, paramList));
                 temp->expr = tempExpr;
                 top++;
                 break;
             case binary:
                 printf("Binary!\n");
-                ans[top - 2] = binFuncs[binary_operations(word)](ans[top - 2], ans[top - 1]);
+                args[1] = pop_value(answer);
+                args[0] = pop_value(answer);
+                push_value(answer, binFuncs[binary_operations(word)](args[0], args[1]));
                 top--;
                 break;
             case unary:
                 printf("Unary!\n");
-                ans[top - 1] = unFuncs[unary_operations(word)](ans[top - 1]);
+                args[1] = pop_value(answer);
+                push_value(answer, unFuncs[unary_operations(word)](args[1]));
                 break;
             case PI_Number:
-                ans[top] = M_PI;
+                push_value(answer, M_PI);
                 top++;
                 break;
             case e_Number:
-                ans[top] = M_E;
+                push_value(answer, M_E);
                 top++;
                 break;
             default:
                 printf("Something is wrong!\n");
                 break;
         }
-        if(top == capacity) {
-            ans = (double complex*) realloc(ans, capacity * 2 * sizeof(double complex));
-            capacity *= 2;
-        }
         free(word);
     }
     delete_queue(input);
-    return ans[0];
+    double complex res = pop_value(answer);
+    delete_stack(answer);
+    return res;
 }
