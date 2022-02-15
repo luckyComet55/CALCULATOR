@@ -46,7 +46,7 @@ void FillParams(PARAMETERS * Head, FILE * fr) {
 }
 
 int main() {
-    FILE * fr = fopen("input.txt", "rt");
+    FILE * fr = fopen("input", "rt");
     QUEUE * input = input_data(fr);
     print_expr(input);
     QUEUE * postfix_not = conf_queue();
