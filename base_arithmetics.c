@@ -103,10 +103,7 @@ typedef enum types {
 QUEUE * get_args(QUEUE * input, int mark_if_comma) {
     QUEUE * argsQueue = conf_queue();
     int bracketCounter = 1;
-    char * word = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        word[i] = 0;
-    }
+    char * word = (char*) calloc(16, sizeof (char));
     strcpy(word, get_string(input));
     while(bracketCounter > 0){
         if (bracketCounter == 1 && (strcmp(get_string(input), mark_if_comma ? ",\0" : ")\0") == 0)) {
@@ -137,10 +134,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
     STACK * operations = init_stack();
     int localShift = 0;
     while(input->next != NULL) {
-        char * word = (char*) calloc(256, sizeof(char));
-        for (int i = 0; i < 256; ++i) {
-            word[i] = 0;
-        }
+        char * word = (char*) calloc(16, sizeof(char));
         strcpy(word, erase(input));
         if(isdigit(word[0])) {
             add(output, word, word[strlen(word) - 1] == 'j' ? imaginary : operand);
@@ -188,10 +182,7 @@ void inf_to_postfix(QUEUE * input, QUEUE * output, PARAMETERS * paramList) {
         free(word);
     }
     while(operations->next != NULL) {
-        char * word = (char*) calloc(256, sizeof(char));
-        for (int i = 0; i < 256; ++i) {
-            word[i] = 0;
-        }
+        char * word = (char*) calloc(16, sizeof(char));
         strcpy(word, pop(operations));
         add(output, word, binary_operations(word) != -1 ? binary : unary);
         free(word);
@@ -219,10 +210,7 @@ double complex postfix_to_ans(QUEUE * input, PARAMETERS * paramList) {
     };
     while(input->next != NULL) {
         double complex args[2];
-        char * word = (char*) calloc(256, sizeof(char));
-        for (int i = 0; i < 256; ++i) {
-            word[i] = 0;
-        }
+        char * word = (char*) calloc(16, sizeof(char));
         int type = get_type(input);
         strcpy(word, erase(input));
         printf("\nWord: %s\nType: %d\n", word, type);

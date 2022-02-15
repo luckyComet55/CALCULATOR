@@ -7,10 +7,7 @@ QUEUE * conf_queue() {
     QUEUE * head = (QUEUE*) malloc(sizeof(QUEUE));
     head->type = -1;
     head->next = NULL;
-    head->value = (char*) calloc(256, sizeof(char));
-    for (int i = 0; i < 256; ++i) {
-        head->value[i] = 0;
-    }
+    head->value = (char*) calloc(16, sizeof(char));
     strcpy(head->value, "HeadNone\0");
     return head;
 }
@@ -21,10 +18,7 @@ void add(QUEUE * head, char * value, int type) {
         temp = temp->next;
     }
     QUEUE * newNode = (QUEUE*) malloc(sizeof (QUEUE));
-    newNode->value = (char*) calloc(256, sizeof(char));
-    for (int i = 0; i < 256; ++i) {
-        newNode->value[i] = 0;
-    }
+    newNode->value = (char*) calloc(16, sizeof(char));
     strcpy(newNode->value, value);
     newNode->type = type;
     newNode->next = NULL;
@@ -37,10 +31,7 @@ char * erase(QUEUE * head) {
         return "\0\0";
     }
     QUEUE * temp = head->next;
-    char * value = (char*) calloc(256, sizeof(char));
-    for (int i = 0; i < 256; ++i) {
-        value[i] = 0;
-    }
+    char * value = (char*) calloc(16, sizeof(char));
     strcpy(value, temp->value);
     head->next = temp->next;
     free(temp);

@@ -15,10 +15,7 @@ QUEUE * input_data(FILE * fr) {
             continue;
         }
         int i = 0;
-        char * word = (char*) calloc(256, sizeof (char));
-        for (int j = 0; j < 256; ++j) {
-            word[i] = 0;
-        }
+        char * word = (char*) calloc(16, sizeof (char));
         if(isdigit(elem)) {
             while(isdigit(elem) || elem == '.' || elem == 'j') {
                 //printf("%c", elem);

@@ -11,10 +11,7 @@ void ParamCon(PARAMETERS * Head, char * name) {
     PARAMETERS * NewPar = (PARAMETERS*) malloc(sizeof (PARAMETERS));
     NewPar->next = NULL;
     NewPar->counter = 1;
-    NewPar->name = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        NewPar->name[i] = 0;
-    }
+    NewPar->name = (char*) calloc(16, sizeof (char));
     strcpy(NewPar->name, name);
     NewPar->expr = conf_queue();
     temp->next = NewPar;
@@ -24,10 +21,7 @@ PARAMETERS * MakeHead() {
     PARAMETERS * Head = (PARAMETERS*) malloc(sizeof (PARAMETERS));
     Head->counter = 0;
     Head->next = NULL;
-    Head->name = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        Head->name[i] = 0;
-    }
+    Head->name = (char*) calloc(16, sizeof (char));
     Head->expr = conf_queue();
     strcpy(Head->name, "HeadNone\0");
     return Head;

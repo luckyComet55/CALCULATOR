@@ -8,10 +8,7 @@
 #include "base_arithmetics.h"
 
 int DefineParam(PARAMETERS * Head, FILE * fr) {
-    char * name = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        name[i] = 0;
-    }
+    char * name = (char*) calloc(16, sizeof (char));
     int i = 0;
     char elem;
     elem = (char)getc(fr);
@@ -49,7 +46,7 @@ void FillParams(PARAMETERS * Head, FILE * fr) {
 }
 
 int main() {
-    FILE * fr = fopen("input", "rt");
+    FILE * fr = fopen("input.txt", "rt");
     QUEUE * input = input_data(fr);
     print_expr(input);
     QUEUE * postfix_not = conf_queue();

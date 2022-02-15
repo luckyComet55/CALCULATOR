@@ -5,10 +5,7 @@
 
 STACK * init_stack() {
     STACK * head = (STACK*) malloc(sizeof (STACK));
-    head->name = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        head->name[i] = 0;
-    }
+    head->name = (char*) calloc(16, sizeof (char));
     strcpy(head->name, "HeadNone\0");
     head->priority = -1;
     head->type = -1;
@@ -21,10 +18,7 @@ void push(STACK * head, char * name, int priority, int type) {
     newNode->priority = priority;
     newNode->next = head->next;
     newNode->type = type;
-    newNode->name = (char*) calloc(256, sizeof(char));
-    for (int i = 0; i < 256; ++i) {
-        newNode->name[i] = 0;
-    }
+    newNode->name = (char*) calloc(16, sizeof(char));
     strcpy(newNode->name, name);
     head->next = newNode;
 }
@@ -44,10 +38,7 @@ char * pop(STACK * head) {
     if(head->next == NULL) {
         exit(-1);
     }
-    char * temp = (char*) calloc(256, sizeof (char));
-    for (int i = 0; i < 256; ++i) {
-        temp[i] = 0;
-    }
+    char * temp = (char*) calloc(16, sizeof (char));
     strcpy(temp, head->next->name);
     remove_node(head);
     return temp;
